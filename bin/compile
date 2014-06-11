@@ -9,9 +9,53 @@ bin_dir=$(cd "$1/out" && pwd)
 src_dir=$(cd "$1/src" && pwd)
 buildpack=$(dirname $(dirname $0))
 
+ruby_ver=${RUBY_VERSION:-2.0.0-p451}
+passenger_ver=${PASSENGER_VERSION:-4.0.44}
+
+# Install RBenv and ruby 2.0
+export RBENV_ROOT="${OPENSHIFT_DATA_DIR}.rbenv"
+export RBENV_INIT="${OPENSHIFT_DATA_DIR}rbenv-init.sh"
+export RUBY_VERSION="${ruby_ver}"
+# Expose ENV variables globally
+echo $RBENV_ROOT > $OPENSHIFT_NGINX_DIR/env/RBENV_ROOT
+echo $RBENV_INIT > $OPENSHIFT_NGINX_DIR/env/RBENV_INIT
+echo $RUBY_VERSION > $OPENSHIFT_NGINX_DIR/env/RUBY_VERSION
+
+if [ ! -d "${RBENV_ROOT}" ] ; then
+
+    wget https://raw.github.com/fesplugas/rbenv-installer/master/bin/rbenv-installer
+    bash rbenv-installer
+
+    echo "gem: --no-rdoc --no-ri" > ${OPENSHIFT_DATA_DIR}.gemrc
+
+    echo '
+export RBENV_ROOT="${OPENSHIFT_DATA_DIR}.rbenv"
+
+if [ -d "${RBENV_ROOT}" ]; then
+  export PATH="${RBENV_ROOT}/bin:${PATH}"
+  eval "$(rbenv init -)"
+fi
+
+alias gem="gem --config-file ${OPENSHIFT_DATA_DIR}.gemrc"
+    ' > $RBENV_INIT
+
+    source $RBENV_INIT
+
+    rbenv install $RUBY_VERSION
+    rbenv global $RUBY_VERSION
+
+    gem install bundler
+    gem install passenger -v "${passenger_ver}"
+fi
+
+# Configure & Compile nginx
 pcre_ver=${PCRE_VERSION:-8.33}
 pcre_file=${PCRE_FILE:-pcre-$pcre_ver.tar.gz}
 pcre_url=${PCRE_URL:-http://sourceforge.net/projects/pcre/files/pcre/$pcre_ver/$pcre_file}
+
+hmm_ver=${HMM_VERSION:-0.25}
+hmm_file=${HMM_VERSION:-v$hmm_ver.tar.gz}
+hmm_url=${HMM_URL:-https://github.com/openresty/headers-more-nginx-module/archive/$hmm_file}
 
 nginx_ver=${NGINX_VERSION:-1.4.4}
 nginx_file=${NGINX_FILE:-nginx-$nginx_ver.tar.gz}
@@ -32,6 +76,21 @@ else
     echo " done"
 fi
 
+if test -d $src_dir/headers-more-module-$hmm_ver
+then
+    echo "-----> Using headers-more-module $hmm_ver"
+else
+    mkdir -p $src_dir/headers-more-nginx-module-$hmm_ver
+    cd $src_dir
+    echo    "       First download, may take several minutes"
+    echo -n "-----> Installing headers-more-module $hmm_ver..."
+    curl -sOL $hmm_url
+    tar zxf $hmm_file
+    rm -f $hmm_file
+    echo " done"
+fi
+
+
 if test -d $src_dir/nginx-$nginx_ver
 then
     echo "-----> Using Nginx $nginx_ver"
@@ -48,7 +107,7 @@ fi
 
 
 cd $src_dir/nginx-$nginx_ver/
-./configure --with-pcre=$src_dir/pcre-$pcre_ver/ --with-http_ssl_module
+./configure --with-pcre=$src_dir/pcre-$pcre_ver/ --with-http_ssl_module --add-module=$src_dir/headers-more-nginx-module-$hmm_ver --add-module=$OPENSHIFT_HOMEDIR/.gem/gems/passenger-$passenger_ver/ext/nginx
 make
 cp -f objs/nginx $bin_dir
 make clean
