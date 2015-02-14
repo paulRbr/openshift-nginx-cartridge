@@ -1,8 +1,8 @@
 Name: nginx
 Cartridge-Short-Name: NGINX
 Display-Name: nginx
-Version: "1.4.4"
-Versions: ["1.4.4"]
+Version: "1.6.2"
+Versions: ["1.6.2"]
 Website: https://github.com/popox/openshift-nginx-cartridge
 Source-Url: git@github.com:popox/openshift-nginx-cartridge.git
 Cartridge-Version: 0.0.2
@@ -15,7 +15,7 @@ Categories:
 Provides:
   - nginx-1.4
   - nginx
-  - nginx(version) = 1.4.4
+  - nginx(version) = 1.6.2
   - passenger-4.0.44
   - passenger
   - passenger(version) = 4.0.44

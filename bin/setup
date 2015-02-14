@@ -15,6 +15,6 @@ set -u
 echo "$version" > env/NGINX_VERSION
 
 
-for dir in logs run; do
+for dir in logs run usr/logs usr/proxy_temp; do
 	mkdir -p $dir
 done
