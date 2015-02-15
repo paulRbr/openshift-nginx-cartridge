@@ -12,9 +12,29 @@ parse_args $@
 # Don't set -u until after the above arg parsing is complete
 set -u
 
+version=${version:-1.4.4}
 echo "$version" > env/NGINX_VERSION
-
+export NGINX_VERSION=$version
 
 for dir in logs run usr/logs usr/proxy_temp; do
 	mkdir -p $dir
 done
+
+source $OPENSHIFT_CARTRIDGE_SDK_BASH
+
+echo "Building Nginx v$version"
+
+NGINX_EXEC=$OPENSHIFT_NGINX_DIR/usr/versions/$NGINX_VERSION/bin/nginx
+NGINX_CONFIG_FILE=$OPENSHIFT_NGINX_DIR/conf/nginx.conf
+NGINX_PID_FILE=$OPENSHIFT_NGINX_DIR/run/nginx.pid
+
+pushd $OPENSHIFT_NGINX_DIR
+  mkdir -p tmp/build
+  bin/compile tmp/build
+
+  bin_dir="usr/versions/$version/bin"
+  mkdir -p $bin_dir
+  cp -f tmp/build/out/nginx $bin_dir
+
+  rm -rf tmp/build
+popd

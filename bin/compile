@@ -57,7 +57,7 @@ hmm_ver=${HMM_VERSION:-0.25}
 hmm_file=${HMM_VERSION:-v$hmm_ver.tar.gz}
 hmm_url=${HMM_URL:-https://github.com/openresty/headers-more-nginx-module/archive/$hmm_file}
 
-nginx_ver=${NGINX_VERSION:-1.6.2}
+nginx_ver=${NGINX_VERSION:-1.4.4}
 nginx_file=${NGINX_FILE:-nginx-$nginx_ver.tar.gz}
 nginx_url=${NGINX_URL:-http://nginx.org/download/$nginx_file}
 

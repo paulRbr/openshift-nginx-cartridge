@@ -13,6 +13,10 @@ function start() {
 
     if [ -f "$NGINX_EXEC" ]; then
 
+        for dir in logs run usr/logs usr/proxy_temp; do
+            mkdir -p $OPENSHIFT_NGINX_DIR/$dir
+        done
+
         if [ -f "$OPENSHIFT_REPO_DIR/nginx.conf.erb" ]; then
             oo-erb $OPENSHIFT_REPO_DIR/nginx.conf.erb > $OPENSHIFT_REPO_DIR/nginx.conf
         fi
@@ -81,7 +85,7 @@ function tidy() {
 
 
 function update() {
-    version=${NGINX_VERSION:-1.6.2}
+    version=${NGINX_VERSION:-1.4.4}
 
     echo "Rebuilding Nginx v$version"
     stop
@@ -92,7 +96,7 @@ function update() {
     bin_dir="usr/versions/$version/bin"
     mkdir -p $bin_dir
     cp -f tmp/build/out/nginx $bin_dir
-    
+
     rm -rf tmp/build
 }
 
